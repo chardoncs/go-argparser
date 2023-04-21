@@ -1,8 +1,9 @@
 package argparser
 
 import (
-	"github.com/chardon55/pacaurgo/core/cli/argparser/argshifter"
-	pag_errors "github.com/chardon55/pacaurgo/core/errors"
+	"fmt"
+
+	"github.com/chardon55/go-argparser/argshifter"
 )
 
 type switchName struct {
@@ -81,7 +82,7 @@ func (op *operation) Complete() ArgParser {
 
 func (op *operation) execute(args []string) error {
 	if op.executor == nil {
-		return pag_errors.NewPacAURGoError("No executors!")
+		return fmt.Errorf("No executors!")
 	}
 
 	return op.executor(op, args)
@@ -130,19 +131,19 @@ func (parser *argParser) Parse(args []string) error {
 
 	_, prs := shifter.Shift()
 	if !prs {
-		return pag_errors.NewPacAURGoError("Please run in a CLI")
+		return fmt.Errorf("Please run in a CLI")
 	}
 
 	// Get operation
 	argType := shifter.GetArgumentType()
 	operationString, prs := shifter.Shift()
 	if !prs || argType != argshifter.ShortOption && argType != argshifter.LongOption {
-		return pag_errors.NewPacAURGoError("no operation specified (use -h for help)")
+		return fmt.Errorf("no operation specified (use -h for help)")
 	}
 
 	op, prs := parser.ops[operationString]
 	if !prs {
-		return pag_errors.NewPacAURGoError("invalid option '%s'", operationString)
+		return fmt.Errorf("invalid option '%s'", operationString)
 	}
 
 	var dataSwitchNamePtr *switchName
