@@ -3,7 +3,7 @@ package argshifter_test
 import (
 	"testing"
 
-	"github.com/chardon55/pacaurgo/core/cli/argparser/argshifter"
+	"github.com/chardon55/go-argparser/argshifter"
 )
 
 func processArgs(t *testing.T, args []string, expectedTypes []argshifter.ArgType, expectedValues []string) {

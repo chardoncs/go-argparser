@@ -3,7 +3,7 @@ package argparser_test
 import (
 	"testing"
 
-	"github.com/chardon55/pacaurgo/core/cli/argparser"
+	"github.com/chardon55/go-argparser"
 )
 
 func TestCollection1(t *testing.T) {
