@@ -1,2 +1,5 @@
 # go-argparser
-A CLI argument parser for Go
+
+Free and open source argument parsing library for Go.
+
+License: MIT
