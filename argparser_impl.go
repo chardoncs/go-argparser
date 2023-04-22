@@ -11,99 +11,6 @@ type switchName struct {
 	Long  string
 }
 
-// Operation implementation
-type operation struct {
-	parent ArgParser
-
-	executor func(op Operation, args []string) error
-	data     []string
-
-	booleanSwitches   map[string]bool
-	incrementSwitches map[string]uint
-	dataSwitches      map[string]string
-
-	switchLongShortMap map[string]rune
-	switchShortLongMap map[rune]string
-}
-
-func (op *operation) AddBooleanSwitch(short rune, long string) Operation {
-	op.booleanSwitches[string(short)] = false
-	op.booleanSwitches[long] = false
-
-	op.switchLongShortMap[long] = short
-	op.switchShortLongMap[short] = long
-
-	return op
-}
-
-func (op *operation) AddLongBooleanSwitch(long string) Operation {
-	op.booleanSwitches[long] = false
-	return op
-}
-
-func (op *operation) AddIncrementSwitch(short rune, long string) Operation {
-	op.incrementSwitches[string(short)] = 0
-	op.incrementSwitches[long] = 0
-
-	op.switchLongShortMap[long] = short
-	op.switchShortLongMap[short] = long
-
-	return op
-}
-
-func (op *operation) AddLongIncrementSwitch(long string) Operation {
-	op.incrementSwitches[long] = 0
-	return op
-}
-
-func (op *operation) AddDataSwitch(short rune, long string) Operation {
-	op.dataSwitches[string(short)] = ""
-	op.dataSwitches[long] = ""
-
-	op.switchLongShortMap[long] = short
-	op.switchShortLongMap[short] = long
-
-	return op
-}
-
-func (op *operation) AddLongDataSwitch(long string) Operation {
-	op.dataSwitches[long] = ""
-	return op
-}
-
-func (op *operation) SetExecutor(e func(Operation, []string) error) Operation {
-	op.executor = e
-	return op
-}
-
-func (op *operation) Complete() ArgParser {
-	return op.parent
-}
-
-func (op *operation) execute(args []string) error {
-	if op.executor == nil {
-		return fmt.Errorf("No executors!")
-	}
-
-	return op.executor(op, args)
-}
-
-func (op *operation) GetBooleanSwitches() map[string]bool {
-	return op.booleanSwitches
-}
-
-func (op *operation) GetIncrementSwitches() map[string]uint {
-	return op.incrementSwitches
-}
-
-func (op *operation) GetDataSwitches() map[string]string {
-	return op.dataSwitches
-}
-
-func (op *operation) GetEndData() []string {
-	return op.data
-}
-
 // ArgParser implementation
 type argParser struct {
 	ops map[string]*operation
@@ -131,7 +38,7 @@ func (parser *argParser) Parse(args []string) error {
 
 	_, prs := shifter.Shift()
 	if !prs {
-		return fmt.Errorf("Please run in a CLI")
+		return fmt.Errorf("please run in a CLI")
 	}
 
 	// Get operation
