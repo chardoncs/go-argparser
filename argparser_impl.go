@@ -13,11 +13,12 @@ type switchName struct {
 
 // ArgParser implementation
 type argParser struct {
-	ops map[string]*operation
+	ops      map[string]*operation
+	commands map[string]*operation
 }
 
-func (parser *argParser) AddOperation(short rune, long string) Operation {
-	op := &operation{
+func (parser *argParser) newOperation() *operation {
+	return &operation{
 		parent:             parser,
 		booleanSwitches:    make(map[string]bool),
 		incrementSwitches:  make(map[string]uint),
@@ -26,10 +27,20 @@ func (parser *argParser) AddOperation(short rune, long string) Operation {
 		switchLongShortMap: make(map[string]rune),
 		switchShortLongMap: make(map[rune]string),
 	}
+}
+
+func (parser *argParser) AddCommand(name string) Operation {
+	op := parser.newOperation()
+
+	parser.commands[name] = op
+	return op
+}
+
+func (parser *argParser) AddOperation(short rune, long string) Operation {
+	op := parser.newOperation()
 
 	parser.ops[string(short)] = op
 	parser.ops[long] = op
-
 	return op
 }
 
@@ -45,6 +56,7 @@ func (parser *argParser) Parse(args []string) error {
 	argType := shifter.GetArgumentType()
 	operationString, prs := shifter.Shift()
 	if !prs || argType != argshifter.ShortOption && argType != argshifter.LongOption {
+		// TODO
 		return fmt.Errorf("no operation specified (use -h for help)")
 	}
 
