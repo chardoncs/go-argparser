@@ -8,7 +8,7 @@ const MINOR_VERSION = 2
 
 const PATCH_VERSION = 0
 
-const PRERELEASE_ID = "rc2"
+const PRERELEASE_ID = ""
 
 func MakeVersionString() string {
 	var suffix string
