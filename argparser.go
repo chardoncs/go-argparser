@@ -1,6 +1,6 @@
 package argparser
 
-// Argument parser customized for PacAUR-Go
+// Argument parser interface
 type ArgParser interface {
 
 	// Add a command
