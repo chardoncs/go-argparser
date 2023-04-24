@@ -46,14 +46,13 @@ func (parser *argParser) AddOperation(short rune, long string) Operation {
 func (parser *argParser) Parse(args []string) error {
 	shifter := argshifter.NewArgShifter(args)
 
-	_, prs := shifter.Shift()
+	_, _, prs := shifter.Shift()
 	if !prs {
 		return exceptions.NewEmptyArgumentError()
 	}
 
 	// Get operation
-	argType := shifter.GetArgumentType()
-	operationString, prs := shifter.Shift()
+	operationString, argType, prs := shifter.Shift()
 	if !prs {
 		return exceptions.NewNoOperationError()
 	}
@@ -79,8 +78,7 @@ func (parser *argParser) Parse(args []string) error {
 
 	var dataSwitchNamePtr *switchName
 
-	argType = shifter.GetArgumentType()
-	value, valPrs := shifter.Shift()
+	value, argType, valPrs := shifter.Shift()
 
 	for valPrs {
 		switch argType {
@@ -148,8 +146,7 @@ func (parser *argParser) Parse(args []string) error {
 			// Nothing to do
 		}
 
-		argType = shifter.GetArgumentType()
-		value, valPrs = shifter.Shift()
+		value, argType, valPrs = shifter.Shift()
 	}
 
 	return op.execute(args)

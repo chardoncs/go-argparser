@@ -10,8 +10,7 @@ func processArgs(t *testing.T, args []string, expectedTypes []argshifter.ArgType
 	length := len(expectedTypes)
 	shifter := argshifter.NewArgShifter(args)
 
-	argType := shifter.GetArgumentType()
-	val, prs := shifter.Shift()
+	val, argType, prs := shifter.Shift()
 
 	var i int
 	for i = 0; prs; i++ {
@@ -32,8 +31,7 @@ func processArgs(t *testing.T, args []string, expectedTypes []argshifter.ArgType
 			return
 		}
 
-		argType = shifter.GetArgumentType()
-		val, prs = shifter.Shift()
+		val, argType, prs = shifter.Shift()
 	}
 
 	if i < length {
