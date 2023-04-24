@@ -1,9 +1,8 @@
 package argparser
 
 import (
-	"fmt"
-
 	"github.com/chardon55/go-argparser/argshifter"
+	"github.com/chardon55/go-argparser/exceptions"
 )
 
 type switchName struct {
@@ -49,32 +48,46 @@ func (parser *argParser) Parse(args []string) error {
 
 	_, prs := shifter.Shift()
 	if !prs {
-		return fmt.Errorf("please run in a CLI")
+		return exceptions.NewEmptyArgumentError()
 	}
 
 	// Get operation
 	argType := shifter.GetArgumentType()
 	operationString, prs := shifter.Shift()
-	if !prs || argType != argshifter.ShortOption && argType != argshifter.LongOption {
-		// TODO
-		return fmt.Errorf("no operation specified (use -h for help)")
+	if !prs {
+		return exceptions.NewNoOperationError()
 	}
 
-	op, prs := parser.ops[operationString]
-	if !prs {
-		return fmt.Errorf("invalid option '%s'", operationString)
+	var op *operation
+
+	switch argType {
+	case argshifter.Command:
+		op, prs = parser.commands[operationString]
+		if !prs {
+			return exceptions.NewInvalidOperationError(operationString, exceptions.COMMAND)
+		}
+
+	case argshifter.ShortOption, argshifter.LongOption:
+		op, prs = parser.ops[operationString]
+		if !prs {
+			return exceptions.NewInvalidOperationError(operationString, exceptions.OPERATION)
+		}
+
+	default:
+		return exceptions.NewNoOperationError()
 	}
 
 	var dataSwitchNamePtr *switchName
 
 	argType = shifter.GetArgumentType()
 	value, valPrs := shifter.Shift()
+
 	for valPrs {
 		switch argType {
 		case argshifter.Data:
 			if dataSwitchNamePtr != nil {
 				if len(dataSwitchNamePtr.Short) > 0 {
-					op.dataSwitches[dataSwitchNamePtr.Short] = value
+					op.DataSwitches()[dataSwitchNamePtr.Short] = value
 				}
 				op.dataSwitches[dataSwitchNamePtr.Long] = value
 
@@ -144,6 +157,7 @@ func (parser *argParser) Parse(args []string) error {
 
 func NewArgParser() ArgParser {
 	return &argParser{
-		ops: make(map[string]*operation),
+		ops:      make(map[string]*operation),
+		commands: make(map[string]*operation),
 	}
 }

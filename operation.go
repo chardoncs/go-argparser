@@ -32,16 +32,16 @@ type Operation interface {
 	Complete() ArgParser
 
 	// Get regular boolean switches
-	GetBooleanSwitches() map[string]bool
+	BooleanSwitches() map[string]bool
 
 	// Get increment switches
-	GetIncrementSwitches() map[string]uint
+	IncrementSwitches() map[string]uint
 
 	// Get data switches
-	GetDataSwitches() map[string]string
+	DataSwitches() map[string]string
 
 	// Get data that do not belong to any data switches
-	GetEndData() []string
+	Data() []string
 }
 
 // Operation implementation
@@ -121,18 +121,18 @@ func (op *operation) execute(args []string) error {
 	return op.executor(op, args)
 }
 
-func (op *operation) GetBooleanSwitches() map[string]bool {
+func (op *operation) BooleanSwitches() map[string]bool {
 	return op.booleanSwitches
 }
 
-func (op *operation) GetIncrementSwitches() map[string]uint {
+func (op *operation) IncrementSwitches() map[string]uint {
 	return op.incrementSwitches
 }
 
-func (op *operation) GetDataSwitches() map[string]string {
+func (op *operation) DataSwitches() map[string]string {
 	return op.dataSwitches
 }
 
-func (op *operation) GetEndData() []string {
+func (op *operation) Data() []string {
 	return op.data
 }
