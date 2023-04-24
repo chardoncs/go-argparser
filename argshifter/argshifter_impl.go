@@ -9,13 +9,17 @@ type argShifter struct {
 	argumentType ArgType
 }
 
-func (as *argShifter) GetArgumentType() ArgType {
+func (as *argShifter) ArgumentType() ArgType {
 	return as.argumentType
 }
 
 func (as *argShifter) Peek() string {
+	if as.cursor >= len(as.args) {
+		return ""
+	}
+
 	if as.argumentType != ShortOption {
-		return as.args[as.cursor]
+		return strings.TrimLeft(as.args[as.cursor], "-")
 	}
 
 	return string(([]rune(as.args[as.cursor]))[as.charCursor])
@@ -55,25 +59,27 @@ func (as *argShifter) toNext() {
 	}
 }
 
-func (as *argShifter) Shift() (string, bool) {
+func (as *argShifter) Shift() (string, ArgType, bool) {
+	return as.Peek(), as.ArgumentType(), as.Walk()
+}
+
+func (as *argShifter) Walk() bool {
 	if as.cursor >= len(as.args) {
-		return "", false
+		return false
 	}
 
 	arg := as.args[as.cursor]
 	argRunes := []rune(arg)
 	if as.argumentType == ShortOption {
-		defer func() {
-			as.charCursor++
-			if as.charCursor >= len(argRunes) {
-				as.toNext()
-			}
-		}()
-		return string(argRunes[as.charCursor]), true
+		as.charCursor++
+		if as.charCursor >= len(argRunes) {
+			as.toNext()
+		}
+		return true
 	}
 
-	defer as.toNext()
-	return strings.TrimLeft(arg, "-"), true
+	as.toNext()
+	return true
 }
 
 func (as *argShifter) Reset() {
