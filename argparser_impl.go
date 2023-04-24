@@ -1,9 +1,8 @@
 package argparser
 
 import (
-	"fmt"
-
 	"github.com/chardon55/go-argparser/argshifter"
+	"github.com/chardon55/go-argparser/exceptions"
 )
 
 type switchName struct {
@@ -11,106 +10,14 @@ type switchName struct {
 	Long  string
 }
 
-// Operation implementation
-type operation struct {
-	parent ArgParser
-
-	executor func(op Operation, args []string) error
-	data     []string
-
-	booleanSwitches   map[string]bool
-	incrementSwitches map[string]uint
-	dataSwitches      map[string]string
-
-	switchLongShortMap map[string]rune
-	switchShortLongMap map[rune]string
-}
-
-func (op *operation) AddBooleanSwitch(short rune, long string) Operation {
-	op.booleanSwitches[string(short)] = false
-	op.booleanSwitches[long] = false
-
-	op.switchLongShortMap[long] = short
-	op.switchShortLongMap[short] = long
-
-	return op
-}
-
-func (op *operation) AddLongBooleanSwitch(long string) Operation {
-	op.booleanSwitches[long] = false
-	return op
-}
-
-func (op *operation) AddIncrementSwitch(short rune, long string) Operation {
-	op.incrementSwitches[string(short)] = 0
-	op.incrementSwitches[long] = 0
-
-	op.switchLongShortMap[long] = short
-	op.switchShortLongMap[short] = long
-
-	return op
-}
-
-func (op *operation) AddLongIncrementSwitch(long string) Operation {
-	op.incrementSwitches[long] = 0
-	return op
-}
-
-func (op *operation) AddDataSwitch(short rune, long string) Operation {
-	op.dataSwitches[string(short)] = ""
-	op.dataSwitches[long] = ""
-
-	op.switchLongShortMap[long] = short
-	op.switchShortLongMap[short] = long
-
-	return op
-}
-
-func (op *operation) AddLongDataSwitch(long string) Operation {
-	op.dataSwitches[long] = ""
-	return op
-}
-
-func (op *operation) SetExecutor(e func(Operation, []string) error) Operation {
-	op.executor = e
-	return op
-}
-
-func (op *operation) Complete() ArgParser {
-	return op.parent
-}
-
-func (op *operation) execute(args []string) error {
-	if op.executor == nil {
-		return fmt.Errorf("No executors!")
-	}
-
-	return op.executor(op, args)
-}
-
-func (op *operation) GetBooleanSwitches() map[string]bool {
-	return op.booleanSwitches
-}
-
-func (op *operation) GetIncrementSwitches() map[string]uint {
-	return op.incrementSwitches
-}
-
-func (op *operation) GetDataSwitches() map[string]string {
-	return op.dataSwitches
-}
-
-func (op *operation) GetEndData() []string {
-	return op.data
-}
-
 // ArgParser implementation
 type argParser struct {
-	ops map[string]*operation
+	ops      map[string]*operation
+	commands map[string]*operation
 }
 
-func (parser *argParser) AddOperation(short rune, long string) Operation {
-	op := &operation{
+func (parser *argParser) newOperation() *operation {
+	return &operation{
 		parent:             parser,
 		booleanSwitches:    make(map[string]bool),
 		incrementSwitches:  make(map[string]uint),
@@ -119,10 +26,20 @@ func (parser *argParser) AddOperation(short rune, long string) Operation {
 		switchLongShortMap: make(map[string]rune),
 		switchShortLongMap: make(map[rune]string),
 	}
+}
+
+func (parser *argParser) AddCommand(name string) Operation {
+	op := parser.newOperation()
+
+	parser.commands[name] = op
+	return op
+}
+
+func (parser *argParser) AddOperation(short rune, long string) Operation {
+	op := parser.newOperation()
 
 	parser.ops[string(short)] = op
 	parser.ops[long] = op
-
 	return op
 }
 
@@ -131,31 +48,46 @@ func (parser *argParser) Parse(args []string) error {
 
 	_, prs := shifter.Shift()
 	if !prs {
-		return fmt.Errorf("Please run in a CLI")
+		return exceptions.NewEmptyArgumentError()
 	}
 
 	// Get operation
 	argType := shifter.GetArgumentType()
 	operationString, prs := shifter.Shift()
-	if !prs || argType != argshifter.ShortOption && argType != argshifter.LongOption {
-		return fmt.Errorf("no operation specified (use -h for help)")
+	if !prs {
+		return exceptions.NewNoOperationError()
 	}
 
-	op, prs := parser.ops[operationString]
-	if !prs {
-		return fmt.Errorf("invalid option '%s'", operationString)
+	var op *operation
+
+	switch argType {
+	case argshifter.Command:
+		op, prs = parser.commands[operationString]
+		if !prs {
+			return exceptions.NewInvalidOperationError(operationString, exceptions.COMMAND)
+		}
+
+	case argshifter.ShortOption, argshifter.LongOption:
+		op, prs = parser.ops[operationString]
+		if !prs {
+			return exceptions.NewInvalidOperationError(operationString, exceptions.OPERATION)
+		}
+
+	default:
+		return exceptions.NewNoOperationError()
 	}
 
 	var dataSwitchNamePtr *switchName
 
 	argType = shifter.GetArgumentType()
 	value, valPrs := shifter.Shift()
+
 	for valPrs {
 		switch argType {
 		case argshifter.Data:
 			if dataSwitchNamePtr != nil {
 				if len(dataSwitchNamePtr.Short) > 0 {
-					op.dataSwitches[dataSwitchNamePtr.Short] = value
+					op.DataSwitches()[dataSwitchNamePtr.Short] = value
 				}
 				op.dataSwitches[dataSwitchNamePtr.Long] = value
 
@@ -225,6 +157,7 @@ func (parser *argParser) Parse(args []string) error {
 
 func NewArgParser() ArgParser {
 	return &argParser{
-		ops: make(map[string]*operation),
+		ops:      make(map[string]*operation),
+		commands: make(map[string]*operation),
 	}
 }
